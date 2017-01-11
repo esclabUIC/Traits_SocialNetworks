@@ -1,0 +1,48 @@
+---
+title: "Trait correlates of individuals’ position in emerging social networks"
+author: "Sylvia A. Morelli, Desmond C. Ong, Rucha Makati, Matthew O. Jackson, & Jamil Zaki"
+last updated: "January 2, 2017"
+---
+
+# Factor analysis with all trait surveys EXCEPT clinical and miscellaneous measures for full sample (N=197)
+
+#install necessary packages
+install.packages('psych')
+install.packages('GPArotation')
+library(psych)
+library(GPArotation)
+
+#set your working directory to wherever data is located
+setwd('') 
+
+#load data
+d <- read.csv('Study1_FactorAnalysis_Data.csv')
+
+#remove clinical & miscellaneous measures
+subset <- subset(d, select = c(2:23))
+
+#Run parallel analysis
+fa.parallel(subset) 
+
+# Parallel analysis suggests that the number of factors = 5  and the number of components =  4 
+
+#Try 2-4 factors with oblique rotation
+fa(subset, 3, rotate="oblimin", fm="minres") 
+fa(subset, 4, rotate="oblimin", fm="minres") 
+fa(subset, 5, rotate="oblimin", fm="minres") 
+
+#for rotated 4 factor solution, remove low loading items (-.4>x<.4): LTES, BFI_c, BFI_o, & Loneliness_avg
+nolowload <- subset(d, select = c(2:5, 7:14, 16, 18: 19, 21:23))
+
+#do factor analysis again with no low loading items
+fa(nolowload,4,rotate="oblimin", fm="minres")
+
+#remove cross loaded items (-.4>x<.4) on more than one factor: PSS_avg
+nocrossload <- subset(d, select =c(2:5, 7:14, 16, 18: 19, 21:22))
+
+#run final factor analysis
+finalFA <- fa(nocrossload,4,rotate="oblimin", fm="minres")
+
+#plot results
+plot(finalFA)
+fa.diagram(finalFA, labels=names, cex=.5, rsize=.4, sort=TRUE)

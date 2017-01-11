@@ -1,0 +1,60 @@
+---
+title: "Trait correlates of individuals’ position in emerging social networks"
+author: "Sylvia A. Morelli, Desmond C. Ong, Rucha Makati, Matthew O. Jackson, & Jamil Zaki"
+last updated: "January 2, 2017"
+---
+
+* Q1 Who are your closest friends? 
+* Q2 Whom do you spend the most time with? 
+* Q3 Whom have you asked for advice about your social life? 
+* Q4 Who do you turn to when something bad happens? 
+* Q5 Whom do you share good news with? 
+* Q6 Who makes you feel supported and cared for? 
+* Q7 Who is most empathetic? 
+* Q8 Who usually makes you feel positive?  
+* Q9 Who usually makes you feel negative? 
+
+```{r preamble, echo=FALSE, message=FALSE, warning=FALSE}
+setwd("~/Dropbox/3_R21/1_Trait Survey/Data processing/_Cleaned_for_Publishing/")
+
+library(gridExtra)
+library(gapminder)
+library(ggplot2)
+```
+
+```{r reading-in-data, echo=FALSE}
+#add in full path of where data is located
+dNodes = read.csv("Study1_TraitIndegreeAnalysis_Data", header=T)
+```
+
+
+```{r node-level-analysis1-q1, echo=FALSE, eval=TRUE, results='hide'}
+###traits predicting inDegree###
+
+##Low Intimacy Questions##
+#question 2
+lm_q2_indegree_full = summary(lm(inDegreeQ2 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#question 8
+lm_q8_indegree_full = summary(lm(inDegreeQ8 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#question 5
+lm_q5_indegree_full = summary(lm(inDegreeQ5 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#question 3
+lm_q3_indegree_full = summary(lm(inDegreeQ3 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+##High Intimacy Questions##
+#question 1
+lm_q1_indegree_full = summary(lm(inDegreeQ1 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#question 4
+lm_q4_indegree_full = summary(lm(inDegreeQ4 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#question 6
+lm_q6_indegree_full = summary(lm(inDegreeQ6 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#question 7
+lm_q7_indegree_full = summary(lm(inDegreeQ7 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+```
