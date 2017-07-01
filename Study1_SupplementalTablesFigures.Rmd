@@ -1,0 +1,742 @@
+---
+title: "Empathy and Well-Being Correlate with Centrality in Different Social Networks"
+author: Sylvia A. Morelli, Desmond C. Ong, Rucha Makati, Matthew O. Jackson, & Jamil
+  Zaki
+output:
+  html_document:
+    toc: yes
+  pdf_document:
+    toc: yes
+  word_document:
+    toc: yes
+last updated: April 19, 2017
+---
+
+
+```{r preamble, echo=FALSE, message=FALSE, warning=FALSE}
+library(gridExtra)
+library(gapminder)
+library(pscl)
+library(ggplot2) # for plotting
+library(pander) # for tables
+library(sna) # for QAP
+```
+
+```{r reading-in-data, echo=FALSE}
+#on next line, add in full path of where data is located
+dNodes = read.csv("Study1_TraitIndegreeAnalysis_Data", header=T)
+```
+
+## 1. Descriptive Statistics for the four factors
+
+```{r descriptives-table-1, echo=FALSE, results='asis'}
+summaryTable1 = data.frame(Factor = c("Empathy / Prosociality", "Life Satisfaction",
+                                      "Negative Emotion", "Positive Emotion"),
+                           Mean = c(mean(dNodes$Empathy_Factor),   mean(dNodes$LifeSatTransf_Factor),   
+                                    mean(dNodes$PosAffect_Factor), mean(dNodes$NegAffect_Factor)),
+                           SD = c(sd(dNodes$Empathy_Factor),   sd(dNodes$LifeSatTransf_Factor),
+                                  sd(dNodes$PosAffect_Factor), sd(dNodes$NegAffect_Factor)),
+                           Min = c(min(dNodes$Empathy_Factor),   min(dNodes$LifeSatTransf_Factor),
+                                   min(dNodes$PosAffect_Factor), min(dNodes$NegAffect_Factor)),
+                           Max = c(max(dNodes$Empathy_Factor),   max(dNodes$LifeSatTransf_Factor),
+                                   max(dNodes$PosAffect_Factor), max(dNodes$NegAffect_Factor)))
+pandoc.table(summaryTable1, digits = c(3), missing = '-', split.table = Inf)
+```
+
+
+Top: Descriptive statistics for the four factors. The left half contains the mean, standard deviation, minimum and maximum of the factors, and the right half contains a correlation matrix with all the pairwise correlations.
+
+
+
+## 2. Inter-network correlations
+
+```{r inter-network-correlation, echo=FALSE, results='asis', eval=TRUE}
+# see https://cran.r-project.org/web/packages/sna/sna.pdf
+# for the qaptest function
+#
+# and http://www.stata.com/meeting/1nasug/simpson.pdf for more on the QAP procedure itself
+# http://www.umasocialmedia.com/socialnetworks/networks-lecture-13-qap-correlation/, http://www.umasocialmedia.com/socialnetworks/glossary/mr-qap-multiple-regression-quadratic-assignment-procedure/, https://www.bebr.ufl.edu/sites/default/files/Krackhardt%20-%201992%20-%20A%20caveat%20on%20the%20use%20of%20the%20quadratic%20assignment%20pr.pdf
+
+
+numParticipants = 193
+bigGraphArray = array(dim=c(8, numParticipants, numParticipants))
+
+for(questionNumber in c(1:8)) {
+  filenameToRead = paste("~/Dropbox/3_R21/1_Trait Survey/Data processing/_Cleaned_for_Publishing/data/nominationMatrices/nominations_allDorms_q", questionNumber, "_t0.csv", sep="")
+  nominationMatrix = read.table(filenameToRead, sep=",", header=T)
+  colnames(nominationMatrix) <- c("ID", nominationMatrix$X)
+  rownames(nominationMatrix) <- nominationMatrix$ID
+  nominationMatrix <- nominationMatrix[,-c(1)] # removing first row
+
+  # storing in the bigGraphArray
+  bigGraphArray[questionNumber,,] = as.matrix(nominationMatrix)
+}
+
+# right now, the bigGraphArray[X,,] contains the nomination matrix for question X (at time 0). Note that this is collapsed across all 4 dorms; I'm unsure if QAP behaves properly for disjoint networks.
+
+q.12<-qaptest(bigGraphArray,gcor,g1=1,g2=2)
+#summary(q.12)
+# summary(q.12)$pgreq is the p value for the correlation.
+q.13<-qaptest(bigGraphArray,gcor,g1=1,g2=3)
+q.14<-qaptest(bigGraphArray,gcor,g1=1,g2=4)
+q.15<-qaptest(bigGraphArray,gcor,g1=1,g2=5)
+q.16<-qaptest(bigGraphArray,gcor,g1=1,g2=6)
+q.17<-qaptest(bigGraphArray,gcor,g1=1,g2=7)
+q.18<-qaptest(bigGraphArray,gcor,g1=1,g2=8)
+q.23<-qaptest(bigGraphArray,gcor,g1=2,g2=3)
+q.24<-qaptest(bigGraphArray,gcor,g1=2,g2=4)
+q.25<-qaptest(bigGraphArray,gcor,g1=2,g2=5)
+q.26<-qaptest(bigGraphArray,gcor,g1=2,g2=6)
+q.27<-qaptest(bigGraphArray,gcor,g1=2,g2=7)
+q.28<-qaptest(bigGraphArray,gcor,g1=2,g2=8)
+q.34<-qaptest(bigGraphArray,gcor,g1=3,g2=4)
+q.35<-qaptest(bigGraphArray,gcor,g1=3,g2=5)
+q.36<-qaptest(bigGraphArray,gcor,g1=3,g2=6)
+q.37<-qaptest(bigGraphArray,gcor,g1=3,g2=7)
+q.38<-qaptest(bigGraphArray,gcor,g1=3,g2=8)
+q.45<-qaptest(bigGraphArray,gcor,g1=4,g2=5)
+q.46<-qaptest(bigGraphArray,gcor,g1=4,g2=6)
+q.47<-qaptest(bigGraphArray,gcor,g1=4,g2=7)
+q.48<-qaptest(bigGraphArray,gcor,g1=4,g2=8)
+q.56<-qaptest(bigGraphArray,gcor,g1=5,g2=6)
+q.57<-qaptest(bigGraphArray,gcor,g1=5,g2=7)
+q.58<-qaptest(bigGraphArray,gcor,g1=5,g2=8)
+q.67<-qaptest(bigGraphArray,gcor,g1=6,g2=7)
+q.68<-qaptest(bigGraphArray,gcor,g1=6,g2=8)
+q.78<-qaptest(bigGraphArray,gcor,g1=7,g2=8)
+
+
+internetworkCorrelationDF = data.frame(
+  Network = c("Close Friends", "Spend Time", "Social Advice", "Bad News", 
+              "Good News", "Support", "Empathetic", "Feel Positive"),
+  Close_Friends = c(NA, 
+                    paste(format(summary(q.12)$testval, digits=3), " (", 
+                          format(summary(q.12)$pgreq, digits=3), ")", sep=""),
+                    paste(format(summary(q.13)$testval, digits=3), " (", 
+                          format(summary(q.13)$pgreq, digits=3), ")", sep=""),
+                    paste(format(summary(q.14)$testval, digits=3), " (", 
+                          format(summary(q.14)$pgreq, digits=3), ")", sep=""),
+                    paste(format(summary(q.15)$testval, digits=3), " (", 
+                          format(summary(q.15)$pgreq, digits=3), ")", sep=""),
+                    paste(format(summary(q.16)$testval, digits=3), " (", 
+                          format(summary(q.16)$pgreq, digits=3), ")", sep=""),
+                    paste(format(summary(q.17)$testval, digits=3), " (", 
+                          format(summary(q.17)$pgreq, digits=3), ")", sep=""),
+                    paste(format(summary(q.18)$testval, digits=3), " (", 
+                          format(summary(q.18)$pgreq, digits=3), ")", sep="")),
+  Spend_Time  = c(NA, NA,
+                  paste(format(summary(q.23)$testval, digits=3), " (", 
+                        format(summary(q.23)$pgreq, digits=3), ")", sep=""),
+                  paste(format(summary(q.24)$testval, digits=3), " (", 
+                        format(summary(q.24)$pgreq, digits=3), ")", sep=""),
+                  paste(format(summary(q.25)$testval, digits=3), " (", 
+                        format(summary(q.25)$pgreq, digits=3), ")", sep=""),
+                  paste(format(summary(q.26)$testval, digits=3), " (", 
+                        format(summary(q.26)$pgreq, digits=3), ")", sep=""),
+                  paste(format(summary(q.27)$testval, digits=3), " (", 
+                        format(summary(q.27)$pgreq, digits=3), ")", sep=""),
+                  paste(format(summary(q.28)$testval, digits=3), " (", 
+                        format(summary(q.28)$pgreq, digits=3), ")", sep="")),
+  Social_Advice  = c(NA, NA, NA,
+                     paste(format(summary(q.34)$testval, digits=3), " (", 
+                           format(summary(q.34)$pgreq, digits=3), ")", sep=""),
+                     paste(format(summary(q.35)$testval, digits=3), " (", 
+                           format(summary(q.35)$pgreq, digits=3), ")", sep=""),
+                     paste(format(summary(q.36)$testval, digits=3), " (", 
+                           format(summary(q.36)$pgreq, digits=3), ")", sep=""),
+                     paste(format(summary(q.37)$testval, digits=3), " (", 
+                           format(summary(q.37)$pgreq, digits=3), ")", sep=""),
+                     paste(format(summary(q.38)$testval, digits=3), " (", 
+                           format(summary(q.38)$pgreq, digits=3), ")", sep="")),
+  Bad_News  = c(NA, NA, NA, NA,
+                paste(format(summary(q.45)$testval, digits=3), " (", 
+                      format(summary(q.45)$pgreq, digits=3), ")", sep=""),
+                paste(format(summary(q.46)$testval, digits=3), " (", 
+                      format(summary(q.46)$pgreq, digits=3), ")", sep=""),
+                paste(format(summary(q.47)$testval, digits=3), " (", 
+                      format(summary(q.47)$pgreq, digits=3), ")", sep=""),
+                paste(format(summary(q.48)$testval, digits=3), " (", 
+                      format(summary(q.48)$pgreq, digits=3), ")", sep="")),
+  Good_News  = c(NA, NA, NA, NA, NA,
+                 paste(format(summary(q.56)$testval, digits=3), " (", 
+                       format(summary(q.56)$pgreq, digits=3), ")", sep=""),
+                 paste(format(summary(q.57)$testval, digits=3), " (", 
+                       format(summary(q.57)$pgreq, digits=3), ")", sep=""),
+                 paste(format(summary(q.58)$testval, digits=3), " (", 
+                       format(summary(q.58)$pgreq, digits=3), ")", sep="")),
+  Support_Care  = c(NA, NA, NA, NA, NA, NA,
+                    paste(format(summary(q.67)$testval, digits=3), " (", 
+                          format(summary(q.67)$pgreq, digits=3), ")", sep=""),
+                    paste(format(summary(q.68)$testval, digits=3), " (", 
+                          format(summary(q.68)$pgreq, digits=3), ")", sep="")),
+  Empathetic = c(NA, NA, NA, NA, NA, NA, NA,
+                 paste(format(summary(q.78)$testval, digits=3), " (", 
+                       format(summary(q.78)$pgreq, digits=3), ")", sep=""))
+)
+
+pandoc.table(internetworkCorrelationDF, digits = c(3), missing = '-', split.table = Inf)
+```
+
+Top: Table of correlations, with (QAP-based) p values in parentheses.
+
+
+
+
+```{r inter-network-correlation-indiv-networks, echo=FALSE, results='asis', eval=FALSE}
+# Bottom: Table of correlations, with (QAP-based) p values in parentheses. For individual samples (labeled D1-D4).
+
+numParticipantsD1 = 53
+numParticipantsD2 = 43
+numParticipantsD3 = 46
+numParticipantsD4 = 51
+smallGraphArrayD1 = array(dim=c(8, numParticipantsD1, numParticipantsD1))
+smallGraphArrayD2 = array(dim=c(8, numParticipantsD2, numParticipantsD2))
+smallGraphArrayD3 = array(dim=c(8, numParticipantsD3, numParticipantsD3))
+smallGraphArrayD4 = array(dim=c(8, numParticipantsD4, numParticipantsD4))
+
+for(questionNumber in c(1:8)) {
+  filenameToRead = paste("~/Dropbox/3_R21/1_Trait Survey/Data processing/_Cleaned_for_Publishing/data/nominationMatrices/nominations_allDorms_q", questionNumber, "_t0.csv", sep="")
+  nominationMatrix = read.table(filenameToRead, sep=",", header=T)
+  colnames(nominationMatrix) <- c("ID", nominationMatrix$X)
+  rownames(nominationMatrix) <- nominationMatrix$ID
+  nominationMatrix <- nominationMatrix[,-c(1)] # removing first row
+
+  # storing in the graphArrays
+  smallGraphArrayD1[questionNumber,,] = as.matrix(nominationMatrix)[1:53,1:53]
+  smallGraphArrayD2[questionNumber,,] = as.matrix(nominationMatrix)[54:96,54:96]
+  smallGraphArrayD3[questionNumber,,] = as.matrix(nominationMatrix)[97:142,97:142]
+  smallGraphArrayD4[questionNumber,,] = as.matrix(nominationMatrix)[143:193,143:193]
+}
+
+#summary(q.12)
+# summary(q.12)$pgreq is the p value for the correlation.
+
+# dorm 1
+d1_q.12<-qaptest(smallGraphArrayD1,gcor,g1=1,g2=2)
+d1_q.13<-qaptest(smallGraphArrayD1,gcor,g1=1,g2=3)
+d1_q.14<-qaptest(smallGraphArrayD1,gcor,g1=1,g2=4)
+d1_q.15<-qaptest(smallGraphArrayD1,gcor,g1=1,g2=5)
+d1_q.16<-qaptest(smallGraphArrayD1,gcor,g1=1,g2=6)
+d1_q.17<-qaptest(smallGraphArrayD1,gcor,g1=1,g2=7)
+d1_q.18<-qaptest(smallGraphArrayD1,gcor,g1=1,g2=8)
+d1_q.23<-qaptest(smallGraphArrayD1,gcor,g1=2,g2=3)
+d1_q.24<-qaptest(smallGraphArrayD1,gcor,g1=2,g2=4)
+d1_q.25<-qaptest(smallGraphArrayD1,gcor,g1=2,g2=5)
+d1_q.26<-qaptest(smallGraphArrayD1,gcor,g1=2,g2=6)
+d1_q.27<-qaptest(smallGraphArrayD1,gcor,g1=2,g2=7)
+d1_q.28<-qaptest(smallGraphArrayD1,gcor,g1=2,g2=8)
+d1_q.34<-qaptest(smallGraphArrayD1,gcor,g1=3,g2=4)
+d1_q.35<-qaptest(smallGraphArrayD1,gcor,g1=3,g2=5)
+d1_q.36<-qaptest(smallGraphArrayD1,gcor,g1=3,g2=6)
+d1_q.37<-qaptest(smallGraphArrayD1,gcor,g1=3,g2=7)
+d1_q.38<-qaptest(smallGraphArrayD1,gcor,g1=3,g2=8)
+d1_q.45<-qaptest(smallGraphArrayD1,gcor,g1=4,g2=5)
+d1_q.46<-qaptest(smallGraphArrayD1,gcor,g1=4,g2=6)
+d1_q.47<-qaptest(smallGraphArrayD1,gcor,g1=4,g2=7)
+d1_q.48<-qaptest(smallGraphArrayD1,gcor,g1=4,g2=8)
+d1_q.56<-qaptest(smallGraphArrayD1,gcor,g1=5,g2=6)
+d1_q.57<-qaptest(smallGraphArrayD1,gcor,g1=5,g2=7)
+d1_q.58<-qaptest(smallGraphArrayD1,gcor,g1=5,g2=8)
+d1_q.67<-qaptest(smallGraphArrayD1,gcor,g1=6,g2=7)
+d1_q.68<-qaptest(smallGraphArrayD1,gcor,g1=6,g2=8)
+d1_q.78<-qaptest(smallGraphArrayD1,gcor,g1=7,g2=8)
+
+# dorm 2
+d2_q.12<-qaptest(smallGraphArrayD2,gcor,g1=1,g2=2)
+d2_q.13<-qaptest(smallGraphArrayD2,gcor,g1=1,g2=3)
+d2_q.14<-qaptest(smallGraphArrayD2,gcor,g1=1,g2=4)
+d2_q.15<-qaptest(smallGraphArrayD2,gcor,g1=1,g2=5)
+d2_q.16<-qaptest(smallGraphArrayD2,gcor,g1=1,g2=6)
+d2_q.17<-qaptest(smallGraphArrayD2,gcor,g1=1,g2=7)
+d2_q.18<-qaptest(smallGraphArrayD2,gcor,g1=1,g2=8)
+d2_q.23<-qaptest(smallGraphArrayD2,gcor,g1=2,g2=3)
+d2_q.24<-qaptest(smallGraphArrayD2,gcor,g1=2,g2=4)
+d2_q.25<-qaptest(smallGraphArrayD2,gcor,g1=2,g2=5)
+d2_q.26<-qaptest(smallGraphArrayD2,gcor,g1=2,g2=6)
+d2_q.27<-qaptest(smallGraphArrayD2,gcor,g1=2,g2=7)
+d2_q.28<-qaptest(smallGraphArrayD2,gcor,g1=2,g2=8)
+d2_q.34<-qaptest(smallGraphArrayD2,gcor,g1=3,g2=4)
+d2_q.35<-qaptest(smallGraphArrayD2,gcor,g1=3,g2=5)
+d2_q.36<-qaptest(smallGraphArrayD2,gcor,g1=3,g2=6)
+d2_q.37<-qaptest(smallGraphArrayD2,gcor,g1=3,g2=7)
+d2_q.38<-qaptest(smallGraphArrayD2,gcor,g1=3,g2=8)
+d2_q.45<-qaptest(smallGraphArrayD2,gcor,g1=4,g2=5)
+d2_q.46<-qaptest(smallGraphArrayD2,gcor,g1=4,g2=6)
+d2_q.47<-qaptest(smallGraphArrayD2,gcor,g1=4,g2=7)
+d2_q.48<-qaptest(smallGraphArrayD2,gcor,g1=4,g2=8)
+d2_q.56<-qaptest(smallGraphArrayD2,gcor,g1=5,g2=6)
+d2_q.57<-qaptest(smallGraphArrayD2,gcor,g1=5,g2=7)
+d2_q.58<-qaptest(smallGraphArrayD2,gcor,g1=5,g2=8)
+d2_q.67<-qaptest(smallGraphArrayD2,gcor,g1=6,g2=7)
+d2_q.68<-qaptest(smallGraphArrayD2,gcor,g1=6,g2=8)
+d2_q.78<-qaptest(smallGraphArrayD2,gcor,g1=7,g2=8)
+
+# dorm 3
+d3_q.12<-qaptest(smallGraphArrayD3,gcor,g1=1,g2=2)
+d3_q.13<-qaptest(smallGraphArrayD3,gcor,g1=1,g2=3)
+d3_q.14<-qaptest(smallGraphArrayD3,gcor,g1=1,g2=4)
+d3_q.15<-qaptest(smallGraphArrayD3,gcor,g1=1,g2=5)
+d3_q.16<-qaptest(smallGraphArrayD3,gcor,g1=1,g2=6)
+d3_q.17<-qaptest(smallGraphArrayD3,gcor,g1=1,g2=7)
+d3_q.18<-qaptest(smallGraphArrayD3,gcor,g1=1,g2=8)
+d3_q.23<-qaptest(smallGraphArrayD3,gcor,g1=2,g2=3)
+d3_q.24<-qaptest(smallGraphArrayD3,gcor,g1=2,g2=4)
+d3_q.25<-qaptest(smallGraphArrayD3,gcor,g1=2,g2=5)
+d3_q.26<-qaptest(smallGraphArrayD3,gcor,g1=2,g2=6)
+d3_q.27<-qaptest(smallGraphArrayD3,gcor,g1=2,g2=7)
+d3_q.28<-qaptest(smallGraphArrayD3,gcor,g1=2,g2=8)
+d3_q.34<-qaptest(smallGraphArrayD3,gcor,g1=3,g2=4)
+d3_q.35<-qaptest(smallGraphArrayD3,gcor,g1=3,g2=5)
+d3_q.36<-qaptest(smallGraphArrayD3,gcor,g1=3,g2=6)
+d3_q.37<-qaptest(smallGraphArrayD3,gcor,g1=3,g2=7)
+d3_q.38<-qaptest(smallGraphArrayD3,gcor,g1=3,g2=8)
+d3_q.45<-qaptest(smallGraphArrayD3,gcor,g1=4,g2=5)
+d3_q.46<-qaptest(smallGraphArrayD3,gcor,g1=4,g2=6)
+d3_q.47<-qaptest(smallGraphArrayD3,gcor,g1=4,g2=7)
+d3_q.48<-qaptest(smallGraphArrayD3,gcor,g1=4,g2=8)
+d3_q.56<-qaptest(smallGraphArrayD3,gcor,g1=5,g2=6)
+d3_q.57<-qaptest(smallGraphArrayD3,gcor,g1=5,g2=7)
+d3_q.58<-qaptest(smallGraphArrayD3,gcor,g1=5,g2=8)
+d3_q.67<-qaptest(smallGraphArrayD3,gcor,g1=6,g2=7)
+d3_q.68<-qaptest(smallGraphArrayD3,gcor,g1=6,g2=8)
+d3_q.78<-qaptest(smallGraphArrayD3,gcor,g1=7,g2=8)
+
+# dorm 4
+d4_q.12<-qaptest(smallGraphArrayD4,gcor,g1=1,g2=2)
+d4_q.13<-qaptest(smallGraphArrayD4,gcor,g1=1,g2=3)
+d4_q.14<-qaptest(smallGraphArrayD4,gcor,g1=1,g2=4)
+d4_q.15<-qaptest(smallGraphArrayD4,gcor,g1=1,g2=5)
+d4_q.16<-qaptest(smallGraphArrayD4,gcor,g1=1,g2=6)
+d4_q.17<-qaptest(smallGraphArrayD4,gcor,g1=1,g2=7)
+d4_q.18<-qaptest(smallGraphArrayD4,gcor,g1=1,g2=8)
+d4_q.23<-qaptest(smallGraphArrayD4,gcor,g1=2,g2=3)
+d4_q.24<-qaptest(smallGraphArrayD4,gcor,g1=2,g2=4)
+d4_q.25<-qaptest(smallGraphArrayD4,gcor,g1=2,g2=5)
+d4_q.26<-qaptest(smallGraphArrayD4,gcor,g1=2,g2=6)
+d4_q.27<-qaptest(smallGraphArrayD4,gcor,g1=2,g2=7)
+d4_q.28<-qaptest(smallGraphArrayD4,gcor,g1=2,g2=8)
+d4_q.34<-qaptest(smallGraphArrayD4,gcor,g1=3,g2=4)
+d4_q.35<-qaptest(smallGraphArrayD4,gcor,g1=3,g2=5)
+d4_q.36<-qaptest(smallGraphArrayD4,gcor,g1=3,g2=6)
+d4_q.37<-qaptest(smallGraphArrayD4,gcor,g1=3,g2=7)
+d4_q.38<-qaptest(smallGraphArrayD4,gcor,g1=3,g2=8)
+d4_q.45<-qaptest(smallGraphArrayD4,gcor,g1=4,g2=5)
+d4_q.46<-qaptest(smallGraphArrayD4,gcor,g1=4,g2=6)
+d4_q.47<-qaptest(smallGraphArrayD4,gcor,g1=4,g2=7)
+d4_q.48<-qaptest(smallGraphArrayD4,gcor,g1=4,g2=8)
+d4_q.56<-qaptest(smallGraphArrayD4,gcor,g1=5,g2=6)
+d4_q.57<-qaptest(smallGraphArrayD4,gcor,g1=5,g2=7)
+d4_q.58<-qaptest(smallGraphArrayD4,gcor,g1=5,g2=8)
+d4_q.67<-qaptest(smallGraphArrayD4,gcor,g1=6,g2=7)
+d4_q.68<-qaptest(smallGraphArrayD4,gcor,g1=6,g2=8)
+d4_q.78<-qaptest(smallGraphArrayD4,gcor,g1=7,g2=8)
+
+
+
+
+internetworkCorrelationDF = data.frame(
+  Network = c("Close Friends", "Spend Time", "Social Advice", "Bad News", 
+              "Good News", "Support", "Empathetic", "Feel Positive"),
+  Close_Friends = c(NA, 
+                    paste("D1: ", format(summary(d1_q.12)$testval, digits=3), " (", 
+                                  format(summary(d1_q.12)$pgreq, digits=3), ") <br>",
+                          "D2: ", format(summary(d2_q.12)$testval, digits=3), " (", 
+                                  format(summary(d2_q.12)$pgreq, digits=3), ") <br>", 
+                          "D3: ", format(summary(d3_q.12)$testval, digits=3), " (", 
+                                  format(summary(d3_q.12)$pgreq, digits=3), ") <br>", 
+                          "D4: ", format(summary(d4_q.12)$testval, digits=3), " (", 
+                                  format(summary(d4_q.12)$pgreq, digits=3), ") <br>", sep=""),
+                    paste("D1: ", format(summary(d1_q.13)$testval, digits=3), " (", 
+                                  format(summary(d1_q.13)$pgreq, digits=3), ") <br>",
+                          "D2: ", format(summary(d2_q.13)$testval, digits=3), " (", 
+                                  format(summary(d2_q.13)$pgreq, digits=3), ") <br>", 
+                          "D3: ", format(summary(d3_q.13)$testval, digits=3), " (", 
+                                  format(summary(d3_q.13)$pgreq, digits=3), ") <br>", 
+                          "D4: ", format(summary(d4_q.13)$testval, digits=3), " (", 
+                                  format(summary(d4_q.13)$pgreq, digits=3), ") <br>", sep=""),
+                    paste("D1: ", format(summary(d1_q.14)$testval, digits=3), " (", 
+                                  format(summary(d1_q.14)$pgreq, digits=3), ") <br>",
+                          "D2: ", format(summary(d2_q.14)$testval, digits=3), " (", 
+                                  format(summary(d2_q.14)$pgreq, digits=3), ") <br>", 
+                          "D3: ", format(summary(d3_q.14)$testval, digits=3), " (", 
+                                  format(summary(d3_q.14)$pgreq, digits=3), ") <br>", 
+                          "D4: ", format(summary(d4_q.14)$testval, digits=3), " (", 
+                                  format(summary(d4_q.14)$pgreq, digits=3), ") <br>", sep=""),
+                    paste("D1: ", format(summary(d1_q.15)$testval, digits=3), " (", 
+                                  format(summary(d1_q.15)$pgreq, digits=3), ") <br>",
+                          "D2: ", format(summary(d2_q.15)$testval, digits=3), " (", 
+                                  format(summary(d2_q.15)$pgreq, digits=3), ") <br>", 
+                          "D3: ", format(summary(d3_q.15)$testval, digits=3), " (", 
+                                  format(summary(d3_q.15)$pgreq, digits=3), ") <br>", 
+                          "D4: ", format(summary(d4_q.15)$testval, digits=3), " (", 
+                                  format(summary(d4_q.15)$pgreq, digits=3), ") <br>", sep=""),
+                    paste("D1: ", format(summary(d1_q.16)$testval, digits=3), " (", 
+                                  format(summary(d1_q.16)$pgreq, digits=3), ") <br>",
+                          "D2: ", format(summary(d2_q.16)$testval, digits=3), " (", 
+                                  format(summary(d2_q.16)$pgreq, digits=3), ") <br>", 
+                          "D3: ", format(summary(d3_q.16)$testval, digits=3), " (", 
+                                  format(summary(d3_q.16)$pgreq, digits=3), ") <br>", 
+                          "D4: ", format(summary(d4_q.16)$testval, digits=3), " (", 
+                                  format(summary(d4_q.16)$pgreq, digits=3), ") <br>", sep=""),
+                    paste("D1: ", format(summary(d1_q.17)$testval, digits=3), " (", 
+                                  format(summary(d1_q.17)$pgreq, digits=3), ") <br>",
+                          "D2: ", format(summary(d2_q.17)$testval, digits=3), " (", 
+                                  format(summary(d2_q.17)$pgreq, digits=3), ") <br>", 
+                          "D3: ", format(summary(d3_q.17)$testval, digits=3), " (", 
+                                  format(summary(d3_q.17)$pgreq, digits=3), ") <br>", 
+                          "D4: ", format(summary(d4_q.17)$testval, digits=3), " (", 
+                                  format(summary(d4_q.17)$pgreq, digits=3), ") <br>", sep=""),
+                    paste("D1: ", format(summary(d1_q.18)$testval, digits=3), " (", 
+                                  format(summary(d1_q.18)$pgreq, digits=3), ") <br>",
+                          "D2: ", format(summary(d2_q.18)$testval, digits=3), " (", 
+                                  format(summary(d2_q.18)$pgreq, digits=3), ") <br>", 
+                          "D3: ", format(summary(d3_q.18)$testval, digits=3), " (", 
+                                  format(summary(d3_q.18)$pgreq, digits=3), ") <br>", 
+                          "D4: ", format(summary(d4_q.18)$testval, digits=3), " (", 
+                                  format(summary(d4_q.18)$pgreq, digits=3), ") <br>", sep="")),
+  Spend_Time  = c(NA, NA,
+                  paste("D1: ", format(summary(d1_q.23)$testval, digits=3), " (", 
+                                format(summary(d1_q.23)$pgreq, digits=3), ") <br>",
+                        "D2: ", format(summary(d2_q.23)$testval, digits=3), " (", 
+                                format(summary(d2_q.23)$pgreq, digits=3), ") <br>", 
+                        "D3: ", format(summary(d3_q.23)$testval, digits=3), " (", 
+                                format(summary(d3_q.23)$pgreq, digits=3), ") <br>", 
+                        "D4: ", format(summary(d4_q.23)$testval, digits=3), " (", 
+                                format(summary(d4_q.23)$pgreq, digits=3), ") <br>", sep=""),
+                  paste("D1: ", format(summary(d1_q.24)$testval, digits=3), " (", 
+                                format(summary(d1_q.24)$pgreq, digits=3), ") <br>",
+                        "D2: ", format(summary(d2_q.24)$testval, digits=3), " (", 
+                                format(summary(d2_q.24)$pgreq, digits=3), ") <br>", 
+                        "D3: ", format(summary(d3_q.24)$testval, digits=3), " (", 
+                                format(summary(d3_q.24)$pgreq, digits=3), ") <br>", 
+                        "D4: ", format(summary(d4_q.24)$testval, digits=3), " (", 
+                                format(summary(d4_q.24)$pgreq, digits=3), ") <br>", sep=""),
+                  paste("D1: ", format(summary(d1_q.25)$testval, digits=3), " (", 
+                                format(summary(d1_q.25)$pgreq, digits=3), ") <br>",
+                        "D2: ", format(summary(d2_q.25)$testval, digits=3), " (", 
+                                format(summary(d2_q.25)$pgreq, digits=3), ") <br>", 
+                        "D3: ", format(summary(d3_q.25)$testval, digits=3), " (", 
+                                format(summary(d3_q.25)$pgreq, digits=3), ") <br>", 
+                        "D4: ", format(summary(d4_q.25)$testval, digits=3), " (", 
+                                format(summary(d4_q.25)$pgreq, digits=3), ") <br>", sep=""),
+                  paste("D1: ", format(summary(d1_q.26)$testval, digits=3), " (", 
+                                format(summary(d1_q.26)$pgreq, digits=3), ") <br>",
+                        "D2: ", format(summary(d2_q.26)$testval, digits=3), " (", 
+                                format(summary(d2_q.26)$pgreq, digits=3), ") <br>", 
+                        "D3: ", format(summary(d3_q.26)$testval, digits=3), " (", 
+                                format(summary(d3_q.26)$pgreq, digits=3), ") <br>", 
+                        "D4: ", format(summary(d4_q.26)$testval, digits=3), " (", 
+                                format(summary(d4_q.27)$pgreq, digits=3), ") <br>", sep=""),
+                  paste("D1: ", format(summary(d1_q.27)$testval, digits=3), " (", 
+                                format(summary(d1_q.27)$pgreq, digits=3), ") <br>",
+                        "D2: ", format(summary(d2_q.27)$testval, digits=3), " (", 
+                                format(summary(d2_q.27)$pgreq, digits=3), ") <br>", 
+                        "D3: ", format(summary(d3_q.27)$testval, digits=3), " (", 
+                                format(summary(d3_q.27)$pgreq, digits=3), ") <br>", 
+                        "D4: ", format(summary(d4_q.27)$testval, digits=3), " (", 
+                                format(summary(d4_q.27)$pgreq, digits=3), ") <br>", sep=""),
+                  paste("D1: ", format(summary(d1_q.28)$testval, digits=3), " (", 
+                                format(summary(d1_q.28)$pgreq, digits=3), ") <br>",
+                        "D2: ", format(summary(d2_q.28)$testval, digits=3), " (", 
+                                format(summary(d2_q.28)$pgreq, digits=3), ") <br>", 
+                        "D3: ", format(summary(d3_q.28)$testval, digits=3), " (", 
+                                format(summary(d3_q.28)$pgreq, digits=3), ") <br>", 
+                        "D4: ", format(summary(d4_q.28)$testval, digits=3), " (", 
+                                format(summary(d4_q.28)$pgreq, digits=3), ") <br>", sep="")),
+  Social_Advice  = c(NA, NA, NA,
+                     paste("D1: ", format(summary(d1_q.34)$testval, digits=3), " (", 
+                                   format(summary(d1_q.34)$pgreq, digits=3), ") <br>",
+                           "D2: ", format(summary(d2_q.34)$testval, digits=3), " (", 
+                                   format(summary(d2_q.34)$pgreq, digits=3), ") <br>", 
+                           "D3: ", format(summary(d3_q.34)$testval, digits=3), " (", 
+                                   format(summary(d3_q.34)$pgreq, digits=3), ") <br>", 
+                           "D4: ", format(summary(d4_q.34)$testval, digits=3), " (", 
+                                   format(summary(d4_q.34)$pgreq, digits=3), ") <br>", sep=""),
+                     paste("D1: ", format(summary(d1_q.35)$testval, digits=3), " (", 
+                                   format(summary(d1_q.35)$pgreq, digits=3), ") <br>",
+                           "D2: ", format(summary(d2_q.35)$testval, digits=3), " (", 
+                                   format(summary(d2_q.35)$pgreq, digits=3), ") <br>", 
+                           "D3: ", format(summary(d3_q.35)$testval, digits=3), " (", 
+                                   format(summary(d3_q.35)$pgreq, digits=3), ") <br>", 
+                           "D4: ", format(summary(d4_q.35)$testval, digits=3), " (", 
+                                   format(summary(d4_q.35)$pgreq, digits=3), ") <br>", sep=""),
+                     paste("D1: ", format(summary(d1_q.36)$testval, digits=3), " (", 
+                                   format(summary(d1_q.36)$pgreq, digits=3), ") <br>",
+                           "D2: ", format(summary(d2_q.36)$testval, digits=3), " (", 
+                                   format(summary(d2_q.36)$pgreq, digits=3), ") <br>", 
+                           "D3: ", format(summary(d3_q.36)$testval, digits=3), " (", 
+                                   format(summary(d3_q.36)$pgreq, digits=3), ") <br>", 
+                           "D4: ", format(summary(d4_q.36)$testval, digits=3), " (", 
+                                   format(summary(d4_q.36)$pgreq, digits=3), ") <br>", sep=""),
+                     paste("D1: ", format(summary(d1_q.37)$testval, digits=3), " (", 
+                                   format(summary(d1_q.37)$pgreq, digits=3), ") <br>",
+                           "D2: ", format(summary(d2_q.37)$testval, digits=3), " (", 
+                                   format(summary(d2_q.37)$pgreq, digits=3), ") <br>", 
+                           "D3: ", format(summary(d3_q.37)$testval, digits=3), " (", 
+                                   format(summary(d3_q.37)$pgreq, digits=3), ") <br>", 
+                           "D4: ", format(summary(d4_q.37)$testval, digits=3), " (", 
+                                   format(summary(d4_q.37)$pgreq, digits=3), ") <br>", sep=""),
+                     paste("D1: ", format(summary(d1_q.38)$testval, digits=3), " (", 
+                                   format(summary(d1_q.38)$pgreq, digits=3), ") <br>",
+                           "D2: ", format(summary(d2_q.38)$testval, digits=3), " (", 
+                                   format(summary(d2_q.38)$pgreq, digits=3), ") <br>", 
+                           "D3: ", format(summary(d3_q.38)$testval, digits=3), " (", 
+                                   format(summary(d3_q.38)$pgreq, digits=3), ") <br>", 
+                           "D4: ", format(summary(d4_q.38)$testval, digits=3), " (", 
+                                   format(summary(d4_q.38)$pgreq, digits=3), ") <br>", sep="")),
+  Bad_News  = c(NA, NA, NA, NA,
+                paste("D1: ", format(summary(d1_q.45)$testval, digits=3), " (", 
+                              format(summary(d1_q.45)$pgreq, digits=3), ") <br>",
+                      "D2: ", format(summary(d2_q.45)$testval, digits=3), " (", 
+                              format(summary(d2_q.45)$pgreq, digits=3), ") <br>", 
+                      "D3: ", format(summary(d3_q.45)$testval, digits=3), " (", 
+                              format(summary(d3_q.45)$pgreq, digits=3), ") <br>", 
+                      "D4: ", format(summary(d4_q.45)$testval, digits=3), " (", 
+                              format(summary(d4_q.45)$pgreq, digits=3), ") <br>", sep=""),
+                paste("D1: ", format(summary(d1_q.46)$testval, digits=3), " (", 
+                              format(summary(d1_q.46)$pgreq, digits=3), ") <br>",
+                      "D2: ", format(summary(d2_q.46)$testval, digits=3), " (", 
+                              format(summary(d2_q.46)$pgreq, digits=3), ") <br>", 
+                      "D3: ", format(summary(d3_q.46)$testval, digits=3), " (", 
+                              format(summary(d3_q.46)$pgreq, digits=3), ") <br>", 
+                      "D4: ", format(summary(d4_q.46)$testval, digits=3), " (", 
+                              format(summary(d4_q.46)$pgreq, digits=3), ") <br>", sep=""),
+                paste("D1: ", format(summary(d1_q.47)$testval, digits=3), " (", 
+                              format(summary(d1_q.47)$pgreq, digits=3), ") <br>",
+                      "D2: ", format(summary(d2_q.47)$testval, digits=3), " (", 
+                              format(summary(d2_q.47)$pgreq, digits=3), ") <br>", 
+                      "D3: ", format(summary(d3_q.47)$testval, digits=3), " (", 
+                              format(summary(d3_q.47)$pgreq, digits=3), ") <br>", 
+                      "D4: ", format(summary(d4_q.47)$testval, digits=3), " (", 
+                              format(summary(d4_q.47)$pgreq, digits=3), ") <br>", sep=""),
+                paste("D1: ", format(summary(d1_q.48)$testval, digits=3), " (", 
+                              format(summary(d1_q.48)$pgreq, digits=3), ") <br>",
+                      "D2: ", format(summary(d2_q.48)$testval, digits=3), " (", 
+                              format(summary(d2_q.48)$pgreq, digits=3), ") <br>", 
+                      "D3: ", format(summary(d3_q.48)$testval, digits=3), " (", 
+                              format(summary(d3_q.48)$pgreq, digits=3), ") <br>", 
+                      "D4: ", format(summary(d4_q.48)$testval, digits=3), " (", 
+                              format(summary(d4_q.48)$pgreq, digits=3), ") <br>", sep="")),
+  Good_News  = c(NA, NA, NA, NA, NA,
+                 paste("D1: ", format(summary(d1_q.56)$testval, digits=3), " (", 
+                               format(summary(d1_q.56)$pgreq, digits=3), ") <br>",
+                       "D2: ", format(summary(d2_q.56)$testval, digits=3), " (", 
+                               format(summary(d2_q.56)$pgreq, digits=3), ") <br>", 
+                       "D3: ", format(summary(d3_q.56)$testval, digits=3), " (", 
+                               format(summary(d3_q.56)$pgreq, digits=3), ") <br>", 
+                       "D4: ", format(summary(d4_q.56)$testval, digits=3), " (", 
+                               format(summary(d4_q.56)$pgreq, digits=3), ") <br>", sep=""),
+                 paste("D1: ", format(summary(d1_q.57)$testval, digits=3), " (", 
+                               format(summary(d1_q.57)$pgreq, digits=3), ") <br>",
+                       "D2: ", format(summary(d2_q.57)$testval, digits=3), " (", 
+                               format(summary(d2_q.57)$pgreq, digits=3), ") <br>", 
+                       "D3: ", format(summary(d3_q.57)$testval, digits=3), " (", 
+                               format(summary(d3_q.57)$pgreq, digits=3), ") <br>", 
+                       "D4: ", format(summary(d4_q.57)$testval, digits=3), " (", 
+                               format(summary(d4_q.57)$pgreq, digits=3), ") <br>", sep=""),
+                 paste("D1: ", format(summary(d1_q.58)$testval, digits=3), " (", 
+                               format(summary(d1_q.58)$pgreq, digits=3), ") <br>",
+                       "D2: ", format(summary(d2_q.58)$testval, digits=3), " (", 
+                               format(summary(d2_q.58)$pgreq, digits=3), ") <br>", 
+                       "D3: ", format(summary(d3_q.58)$testval, digits=3), " (", 
+                               format(summary(d3_q.58)$pgreq, digits=3), ") <br>", 
+                       "D4: ", format(summary(d4_q.58)$testval, digits=3), " (", 
+                               format(summary(d4_q.58)$pgreq, digits=3), ") <br>", sep="")),
+  Support_Care  = c(NA, NA, NA, NA, NA, NA,
+                    paste("D1: ", format(summary(d1_q.67)$testval, digits=3), " (", 
+                                  format(summary(d1_q.67)$pgreq, digits=3), ") <br>",
+                          "D2: ", format(summary(d2_q.67)$testval, digits=3), " (", 
+                                  format(summary(d2_q.67)$pgreq, digits=3), ") <br>", 
+                          "D3: ", format(summary(d3_q.67)$testval, digits=3), " (", 
+                                  format(summary(d3_q.67)$pgreq, digits=3), ") <br>", 
+                          "D4: ", format(summary(d4_q.67)$testval, digits=3), " (", 
+                                  format(summary(d4_q.67)$pgreq, digits=3), ") <br>", sep=""),
+                    paste("D1: ", format(summary(d1_q.68)$testval, digits=3), " (", 
+                                  format(summary(d1_q.68)$pgreq, digits=3), ") <br>",
+                          "D2: ", format(summary(d2_q.68)$testval, digits=3), " (", 
+                                  format(summary(d2_q.68)$pgreq, digits=3), ") <br>", 
+                          "D3: ", format(summary(d3_q.68)$testval, digits=3), " (", 
+                                  format(summary(d3_q.68)$pgreq, digits=3), ") <br>", 
+                          "D4: ", format(summary(d4_q.68)$testval, digits=3), " (", 
+                                  format(summary(d4_q.68)$pgreq, digits=3), ") <br>", sep="")),
+  Empathetic = c(NA, NA, NA, NA, NA, NA, NA,
+                 paste("D1: ", format(summary(d1_q.78)$testval, digits=3), " (", 
+                               format(summary(d1_q.78)$pgreq, digits=3), ") <br>",
+                       "D2: ", format(summary(d2_q.78)$testval, digits=3), " (", 
+                               format(summary(d2_q.78)$pgreq, digits=3), ") <br>", 
+                       "D3: ", format(summary(d3_q.78)$testval, digits=3), " (", 
+                               format(summary(d3_q.78)$pgreq, digits=3), ") <br>", 
+                       "D4: ", format(summary(d4_q.78)$testval, digits=3), " (", 
+                               format(summary(d4_q.78)$pgreq, digits=3), ") <br>", sep=""))
+)
+
+pandoc.table(internetworkCorrelationDF, digits = c(3), missing = '-', split.table = Inf)
+```
+
+
+## 3. Histograms of indegree
+
+```{r indegree-histograms, echo=FALSE, fig.height=6, fig.width=10}
+# the following two data frames are used to plot the indegree and outdegree histograms.
+histogramDF1 = data.frame(
+  Network = factor(rep(c("Close Friend", "Spend Time", "Social Advice", "Bad News", 
+                         "Good News", "Support", "Empathetic", "Feel Positive"), each=nrow(dNodes)),
+                   levels = c("Close Friend", "Spend Time", "Social Advice", "Bad News", 
+                              "Good News", "Support", "Empathetic", "Feel Positive")),
+  inDegree = c(dNodes$inDegreeQ1, dNodes$inDegreeQ2, dNodes$inDegreeQ3, dNodes$inDegreeQ4,
+               dNodes$inDegreeQ5, dNodes$inDegreeQ6, dNodes$inDegreeQ7, dNodes$inDegreeQ8),
+  outDegree = c(dNodes$outDegreeQ1, dNodes$outDegreeQ2, dNodes$outDegreeQ3, dNodes$outDegreeQ4,
+                dNodes$outDegreeQ5, dNodes$outDegreeQ6, dNodes$outDegreeQ7, dNodes$outDegreeQ8),
+  numReciprocal = c(dNodes$numReciprocalQ1, dNodes$numReciprocalQ2, dNodes$numReciprocalQ3, dNodes$numReciprocalQ4,
+                    dNodes$numReciprocalQ5, dNodes$numReciprocalQ6, dNodes$numReciprocalQ7, dNodes$numReciprocalQ8)
+)
+
+# this provides the mean ratings, just so we can plot the means
+histogramDF2 = data.frame(
+  Network = c("Close Friend", "Spend Time", "Social Advice", "Bad News", 
+              "Good News", "Support", "Empathetic", "Feel Positive"),
+  mean_inDegree = c( mean(dNodes$inDegreeQ1), mean(dNodes$inDegreeQ2), 
+                     mean(dNodes$inDegreeQ3), mean(dNodes$inDegreeQ4), 
+                     mean(dNodes$inDegreeQ5), mean(dNodes$inDegreeQ6), 
+                     mean(dNodes$inDegreeQ7), mean(dNodes$inDegreeQ8)),
+  mean_outDegree = c(mean(dNodes$outDegreeQ1), mean(dNodes$outDegreeQ2), 
+                     mean(dNodes$outDegreeQ3), mean(dNodes$outDegreeQ4), 
+                     mean(dNodes$outDegreeQ5), mean(dNodes$outDegreeQ6), 
+                     mean(dNodes$outDegreeQ7), mean(dNodes$outDegreeQ8)),
+  mean_reciprocal = c(mean(dNodes$numReciprocalQ1), mean(dNodes$numReciprocalQ2), 
+                     mean(dNodes$numReciprocalQ3), mean(dNodes$numReciprocalQ4), 
+                     mean(dNodes$numReciprocalQ5), mean(dNodes$numReciprocalQ6), 
+                     mean(dNodes$numReciprocalQ7), mean(dNodes$numReciprocalQ8))
+)
+
+
+# the hjust code is from http://stackoverflow.com/questions/32123288/position-ggplot-text-in-each-corner
+# for indegree graph, put label in top right.
+maxValueForIndegreeGraph = max(table(histogramDF1$inDegree, histogramDF1$Network))
+ggplot(histogramDF1, aes(x=inDegree)) +
+  geom_histogram(binwidth=1, colour="black", fill="lightyellow") + 
+  #geom_vline(data = histogramDF2,  aes(xintercept=mean_inDegree), color="red", linetype="dashed", size=1) +
+  #geom_text(data= histogramDF2, aes(x=11, y=55, label=paste("mean =", format(mean_inDegree, digits=3) ))) +
+  geom_text(data= histogramDF2, aes(x=+Inf, y=maxValueForIndegreeGraph, hjust=+1.05, vjustvar=1, label=paste("mean =", format(mean_inDegree, digits=3) ))) +
+  scale_x_continuous(limits=c(-0.5,15.5)) +
+  ylab("Frequency") + xlab("Indegree") + 
+  facet_wrap(~ Network, ncol=4, scales = "free_x") +
+  theme_bw() + theme(strip.background = element_rect(fill="#FFFFFF"), 
+        strip.text = element_text(size=12), 
+        axis.text = element_text(size=12),
+        axis.title.x = element_text(size=14, vjust=-0.2),
+        axis.title.y = element_text(size=14, vjust=0.8),
+        panel.grid = element_blank())
+
+```
+
+Top: Histograms of indegree for all 8 networks, collapsed across all the dormotories. 
+
+
+## 4. Histograms of outdegree
+
+
+```{r outDegree-histograms, echo=FALSE, fig.height=6, fig.width=10}
+# the hjust code is from http://stackoverflow.com/questions/32123288/position-ggplot-text-in-each-corner
+# for outdegree graph, put label in top right corner
+maxValueForOutdegreeGraph = max(table(histogramDF1$outDegree, histogramDF1$Network))
+ggplot(histogramDF1, aes(x=outDegree)) +
+  geom_histogram(binwidth=1, colour="black", fill="lightyellow") + 
+  #geom_vline(data = histogramDF2,  aes(xintercept=mean_outDegree), color="red", linetype="dashed", size=1) +
+  #geom_text(data= histogramDF2, aes(x=6, y=53, label=paste("mean =", format(mean_outDegree, digits=3) ))) +
+  geom_text(data= histogramDF2, aes(x=+Inf, y=maxValueForOutdegreeGraph, hjust=+1.05, vjustvar=1, label=paste("mean =", format(mean_outDegree, digits=3) ))) +
+  scale_x_continuous(breaks=c(0,2,4,6,8),limits=c(-0.5,8.5)) +
+  ylab("Frequency") + xlab("Outdegree") + 
+  facet_wrap(~ Network, ncol=4, scales = "free_x") +
+  theme_bw() + theme(strip.background = element_rect(fill="#FFFFFF"), 
+        strip.text = element_text(size=12), 
+        axis.text = element_text(size=12),
+        axis.title.x = element_text(size=14, vjust=-0.2),
+        axis.title.y = element_text(size=14, vjust=0.8),
+        panel.grid = element_blank())
+```
+
+Top: Histograms of outdegree for all 8 networks, collapsed across all the dormotories. 
+ 
+
+
+## 5. Reciprocal Nominations Descriptive Statistics
+
+
+```{r reciprocal-histograms, echo=FALSE, fig.height=6, fig.width=10}
+# the hjust code is from http://stackoverflow.com/questions/32123288/position-ggplot-text-in-each-corner
+# for reciprocal graph, put label in top right corner
+maxValueForReciprocalGraph = max(table(histogramDF1$numReciprocal, histogramDF1$Network))
+ggplot(histogramDF1, aes(x=numReciprocal)) +
+  geom_histogram(binwidth=1, colour="black", fill="lightyellow") + 
+  #geom_vline(data = histogramDF2,  aes(xintercept=mean_reciprocal), color="red", linetype="dashed", size=1) +
+  #geom_text(data= histogramDF2, aes(x=4, y=100, label=paste("mean =", format(mean_reciprocal, digits=3) ))) +
+  geom_text(data= histogramDF2, aes(x=+Inf, y=maxValueForReciprocalGraph, hjust=+1.05, vjustvar=1, label=paste("mean =", format(mean_reciprocal, digits=3) ))) +
+  scale_x_continuous(breaks=c(0,2,4,6),limits=c(-0.5,6.5)) +
+  ylab("Frequency") + xlab("Number of Reciprocal Nominations") + 
+  facet_wrap(~ Network, ncol=4, scales = "free_x") +
+  theme_bw() + theme(strip.background = element_rect(fill="#FFFFFF"), 
+        strip.text = element_text(size=12), 
+        axis.text = element_text(size=12),
+        axis.title.x = element_text(size=14, vjust=-0.2),
+        axis.title.y = element_text(size=14, vjust=0.8),
+        panel.grid = element_blank())
+```
+
+Top: Histograms of reciprocal nominations for all 8 networks, collapsed across all the dormotories. 
+ 
+ 
+```{r descriptives-table-2, echo=FALSE, results='asis'}
+summaryTable2 = data.frame(
+  #NetworkNum = c("Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8"),
+  Network = c("Close Friends", "Spend Time", "Social Advice", "Bad News", 
+              "Good News", "Support", "Empathetic", "Feel Positive"),
+  mean_Reciprocal = c(mean(dNodes$numReciprocalQ1), mean(dNodes$numReciprocalQ2),
+                      mean(dNodes$numReciprocalQ3), mean(dNodes$numReciprocalQ4),
+                      mean(dNodes$numReciprocalQ5), mean(dNodes$numReciprocalQ6),
+                      mean(dNodes$numReciprocalQ7), mean(dNodes$numReciprocalQ8)),
+  SD_Reciprocal = c(sd(dNodes$numReciprocalQ1), sd(dNodes$numReciprocalQ2),
+                    sd(dNodes$numReciprocalQ3), sd(dNodes$numReciprocalQ4),
+                    sd(dNodes$numReciprocalQ5), sd(dNodes$numReciprocalQ6),
+                    sd(dNodes$numReciprocalQ7), sd(dNodes$numReciprocalQ8)),
+  mean_Recip_over_incoming = c(mean(dNodes$numReciprocalQ1/dNodes$inDegreeQ1, na.rm=T), 
+                               mean(dNodes$numReciprocalQ2/dNodes$inDegreeQ2, na.rm=T), 
+                               mean(dNodes$numReciprocalQ3/dNodes$inDegreeQ3, na.rm=T), 
+                               mean(dNodes$numReciprocalQ4/dNodes$inDegreeQ4, na.rm=T), 
+                               mean(dNodes$numReciprocalQ5/dNodes$inDegreeQ5, na.rm=T), 
+                               mean(dNodes$numReciprocalQ6/dNodes$inDegreeQ6, na.rm=T), 
+                               mean(dNodes$numReciprocalQ7/dNodes$inDegreeQ7, na.rm=T), 
+                               mean(dNodes$numReciprocalQ8/dNodes$inDegreeQ8, na.rm=T)),
+  sd_Recip_over_incoming = c(sd(dNodes$numReciprocalQ1/dNodes$inDegreeQ1, na.rm=T), 
+                             sd(dNodes$numReciprocalQ2/dNodes$inDegreeQ2, na.rm=T), 
+                             sd(dNodes$numReciprocalQ3/dNodes$inDegreeQ3, na.rm=T), 
+                             sd(dNodes$numReciprocalQ4/dNodes$inDegreeQ4, na.rm=T), 
+                             sd(dNodes$numReciprocalQ5/dNodes$inDegreeQ5, na.rm=T), 
+                             sd(dNodes$numReciprocalQ6/dNodes$inDegreeQ6, na.rm=T), 
+                             sd(dNodes$numReciprocalQ7/dNodes$inDegreeQ7, na.rm=T), 
+                             sd(dNodes$numReciprocalQ8/dNodes$inDegreeQ8, na.rm=T)),
+  mean_Recip_over_outgoing = c(mean(dNodes$numReciprocalQ1/dNodes$outDegreeQ1, na.rm=T), 
+                               mean(dNodes$numReciprocalQ2/dNodes$outDegreeQ2, na.rm=T), 
+                               mean(dNodes$numReciprocalQ3/dNodes$outDegreeQ3, na.rm=T), 
+                               mean(dNodes$numReciprocalQ4/dNodes$outDegreeQ4, na.rm=T), 
+                               mean(dNodes$numReciprocalQ5/dNodes$outDegreeQ5, na.rm=T), 
+                               mean(dNodes$numReciprocalQ6/dNodes$outDegreeQ6, na.rm=T), 
+                               mean(dNodes$numReciprocalQ7/dNodes$outDegreeQ7, na.rm=T), 
+                               mean(dNodes$numReciprocalQ8/dNodes$outDegreeQ8, na.rm=T)),
+  sd_Recip_over_outgoing = c(sd(dNodes$numReciprocalQ1/dNodes$outDegreeQ1, na.rm=T), 
+                             sd(dNodes$numReciprocalQ2/dNodes$outDegreeQ2, na.rm=T), 
+                             sd(dNodes$numReciprocalQ3/dNodes$outDegreeQ3, na.rm=T), 
+                             sd(dNodes$numReciprocalQ4/dNodes$outDegreeQ4, na.rm=T), 
+                             sd(dNodes$numReciprocalQ5/dNodes$outDegreeQ5, na.rm=T), 
+                             sd(dNodes$numReciprocalQ6/dNodes$outDegreeQ6, na.rm=T), 
+                             sd(dNodes$numReciprocalQ7/dNodes$outDegreeQ7, na.rm=T), 
+                             sd(dNodes$numReciprocalQ8/dNodes$outDegreeQ8, na.rm=T))
+  )
+pandoc.table(summaryTable2, digits = c(3), missing = '-', split.table = Inf)
+```
+
+
+Top: Table with mean and standard deviation of (i) reciprocal ties (ii) percentage of reciprocated incoming nominations, and (iii) percentage of outgoing nominations as outcomes.
+
+
+

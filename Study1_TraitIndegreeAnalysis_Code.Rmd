@@ -1,7 +1,7 @@
 ---
-title: "Trait correlates of individuals’ position in emerging social networks"
+title: "Empathy and Well-Being Correlate with Centrality in Different Social Networks"
 author: "Sylvia A. Morelli, Desmond C. Ong, Rucha Makati, Matthew O. Jackson, & Jamil Zaki"
-last updated: "January 2, 2017"
+last updated: "June 30, 2017"
 ---
 
 * Q1 Who are your closest friends? 
@@ -15,46 +15,285 @@ last updated: "January 2, 2017"
 * Q9 Who usually makes you feel negative? 
 
 ```{r preamble, echo=FALSE, message=FALSE, warning=FALSE}
-setwd("~/Dropbox/3_R21/1_Trait Survey/Data processing/_Cleaned_for_Publishing/")
 
 library(gridExtra)
 library(gapminder)
-library(ggplot2)
+library(pscl)
 ```
 
 ```{r reading-in-data, echo=FALSE}
-#add in full path of where data is located
+#on next line, add in full path of where data is located
 dNodes = read.csv("Study1_TraitIndegreeAnalysis_Data", header=T)
 ```
 
 
-```{r node-level-analysis1-q1, echo=FALSE, eval=TRUE, results='hide'}
-###traits predicting inDegree###
+```{r traits-predicting-indegree-q1, echo=FALSE, eval=TRUE, results='hide'}
+###question 1###
 
-##Low Intimacy Questions##
-#question 2
-lm_q2_indegree_full = summary(lm(inDegreeQ2 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+##check for overdispersion## 
+#look at unconditional mean & variance of outcome
+mean(dNodes$inDegreeQ1)
+var(dNodes$inDegreeQ1)
 
-#question 8
-lm_q8_indegree_full = summary(lm(inDegreeQ8 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+#run a quasi-poisson model (fits an extra dispersion parameter to account for extra variance) 
+summary(qpois <- glm(inDegreeQ1~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=quasipoisson, dNodes))
+#if dispersion parameter >1, then overdispersed
 
-#question 5
-lm_q5_indegree_full = summary(lm(inDegreeQ5 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+##negative binomial regression model## 
+# run if data is overdispersed
+summary(ngb <- glm.nb(inDegreeQ1~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
 
-#question 3
-lm_q3_indegree_full = summary(lm(inDegreeQ3 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+#use a likelihood ratio test (i.e.deviance) to compare poisson to negative binomial
+#poisson model#
+summary(pois <- glm(inDegreeQ1~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=poisson, dNodes))
 
-##High Intimacy Questions##
-#question 1
-lm_q1_indegree_full = summary(lm(inDegreeQ1 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+#likelihood ratio test#
+lklhd <- 2*(logLik(ngb) - logLik(pois))
+pchisq(lklhd, df = 1, lower.tail = FALSE)
+# p < .05 means that negative binomial model is a sig improvement over a poisson model
 
-#question 4
-lm_q4_indegree_full = summary(lm(inDegreeQ4 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+##zero-inflated negative binomial regression model##
+summary(zingb <- zeroinfl(inDegreeQ1~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
 
-#question 6
-lm_q6_indegree_full = summary(lm(inDegreeQ6 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+#use a Vuong test to compare negative binomial to zero-inflated negative binomial
+vuong(ngb, zingb)
+# model 1 > model 2 with p < .05 means that neg binomial model is sig improvement over zero-inflated binomial model
+```
 
-#question 7
-lm_q7_indegree_full = summary(lm(inDegreeQ7 ~ scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+```{r traits-predicting-indegree-q2, echo=FALSE, eval=TRUE, results='hide'}
+###question 2###
 
+##check for overdispersion## 
+#look at unconditional mean & variance of outcome
+mean(dNodes$inDegreeQ2)
+var(dNodes$inDegreeQ2)
+
+
+#run a quasi-poisson model (fits an extra dispersion parameter to account for extra variance) 
+summary(qpois <- glm(inDegreeQ2~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=quasipoisson, dNodes))
+#if dispersion parameter >1, then overdispersed
+
+##negative binomial regression model## 
+# run if data is overdispersed
+summary(ngb <- glm.nb(inDegreeQ2~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#use a likelihood ratio test (i.e.deviance) to compare poisson to negative binomial
+#poisson model#
+pois <- glm(inDegreeQ2~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=poisson, dNodes)
+
+#likelihood ratio test#
+lklhd <- 2*(logLik(ngb) - logLik(pois))
+pchisq(lklhd, df = 1, lower.tail = FALSE)
+# p < .05 means that negative binomial model is a sig improvement over a poisson model
+
+##zero-inflated negative binomial regression model##
+summary(zingb <- zeroinfl(inDegreeQ2~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#use a Vuong test to compare negative binomial to zero-inflated negative binomial
+vuong(ngb, zingb)
+# model 1 > model 2 with p < .05 means that neg binomial model is sig improvement over zero-inflated binomial model
+```
+
+```{r traits-predicting-indegree-q3, echo=FALSE, eval=TRUE, results='hide'}
+###question 3###
+
+##check for overdispersion## 
+#look at unconditional mean & variance of outcome
+mean(dNodes$inDegreeQ3)
+var(dNodes$inDegreeQ3)
+
+
+#run a quasi-poisson model (fits an extra dispersion parameter to account for extra variance) 
+summary(qpois <- glm(inDegreeQ3~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=quasipoisson, dNodes))
+#if dispersion parameter >1, then overdispersed
+
+##negative binomial regression model## 
+# run if data is overdispersed
+summary(ngb <- glm.nb(inDegreeQ3~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#use a likelihood ratio test (i.e.deviance) to compare poisson to negative binomial
+#poisson model#
+pois <- glm(inDegreeQ3~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=poisson, dNodes)
+
+#likelihood ratio test#
+lklhd <- 2*(logLik(ngb) - logLik(pois))
+pchisq(lklhd, df = 1, lower.tail = FALSE)
+# p < .05 means that negative binomial model is a sig improvement over a poisson model
+
+##zero-inflated negative binomial regression model##
+summary(zingb <- zeroinfl(inDegreeQ3~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#use a Vuong test to compare negative binomial to zero-inflated negative binomial
+vuong(ngb, zingb)
+# model 1 > model 2 with p < .05 means that neg binomial model is sig improvement over zero-inflated binomial model
+```
+
+```{r traits-predicting-indegree-q4, echo=FALSE, eval=TRUE, results='hide'}
+###question 4###
+
+##check for overdispersion## 
+#look at unconditional mean & variance of outcome
+mean(dNodes$inDegreeQ4)
+var(dNodes$inDegreeQ4)
+
+
+#run a quasi-poisson model (fits an extra dispersion parameter to account for extra variance) 
+summary(qpois <- glm(inDegreeQ4~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=quasipoisson, dNodes))
+#if dispersion parameter >1, then overdispersed
+
+##negative binomial regression model## 
+# run if data is overdispersed
+summary(ngb <- glm.nb(inDegreeQ4~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#use a likelihood ratio test (i.e.deviance) to compare poisson to negative binomial
+#poisson model#
+pois <- glm(inDegreeQ4~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=poisson, dNodes)
+
+#likelihood ratio test#
+lklhd <- 2*(logLik(ngb) - logLik(pois))
+pchisq(lklhd, df = 1, lower.tail = FALSE)
+# p < .05 means that negative binomial model is a sig improvement over a poisson model
+
+##zero-inflated negative binomial regression model##
+summary(zingb <- zeroinfl(inDegreeQ4~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#use a Vuong test to compare negative binomial to zero-inflated negative binomial
+vuong(ngb, zingb)
+# model 1 > model 2 with p < .05 means that neg binomial model is sig improvement over zero-inflated binomial model
+```
+
+```{r traits-predicting-indegree-q5, echo=FALSE, eval=TRUE, results='hide'}
+###question 5###
+
+##check for overdispersion## 
+#look at unconditional mean & variance of outcome
+mean(dNodes$inDegreeQ5)
+var(dNodes$inDegreeQ5)
+
+
+#run a quasi-poisson model (fits an extra dispersion parameter to account for extra variance) 
+summary(qpois <- glm(inDegreeQ5~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=quasipoisson, dNodes))
+#if dispersion parameter >1, then overdispersed
+
+##negative binomial regression model## 
+# run if data is overdispersed
+summary(ngb <- glm.nb(inDegreeQ5~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#use a likelihood ratio test (i.e.deviance) to compare poisson to negative binomial
+#poisson model#
+pois <- glm(inDegreeQ5~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=poisson, dNodes)
+
+#likelihood ratio test#
+lklhd <- 2*(logLik(ngb) - logLik(pois))
+pchisq(lklhd, df = 1, lower.tail = FALSE)
+# p < .05 means that negative binomial model is a sig improvement over a poisson model
+
+##zero-inflated negative binomial regression model##
+summary(zingb <- zeroinfl(inDegreeQ5~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#use a Vuong test to compare negative binomial to zero-inflated negative binomial
+vuong(ngb, zingb)
+# model 1 > model 2 with p < .05 means that neg binomial model is sig improvement over zero-inflated binomial model
+```
+
+```{r traits-predicting-indegree-q6, echo=FALSE, eval=TRUE, results='hide'}
+###question 6###
+
+##check for overdispersion## 
+#look at unconditional mean & variance of outcome
+mean(dNodes$inDegreeQ6)
+var(dNodes$inDegreeQ6)
+
+
+#run a quasi-poisson model (fits an extra dispersion parameter to account for extra variance) 
+summary(qpois <- glm(inDegreeQ6~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=quasipoisson, dNodes))
+#if dispersion parameter >1, then overdispersed
+
+##negative binomial regression model## 
+# run if data is overdispersed
+summary(ngb <- glm.nb(inDegreeQ6~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#use a likelihood ratio test (i.e.deviance) to compare poisson to negative binomial
+#poisson model#
+pois <- glm(inDegreeQ6~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=poisson, dNodes)
+
+#likelihood ratio test#
+lklhd <- 2*(logLik(ngb) - logLik(pois))
+pchisq(lklhd, df = 1, lower.tail = FALSE)
+# p < .05 means that negative binomial model is a sig improvement over a poisson model
+
+##zero-inflated negative binomial regression model##
+summary(zingb <- zeroinfl(inDegreeQ6~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#use a Vuong test to compare negative binomial to zero-inflated negative binomial
+vuong(ngb, zingb)
+# model 1 > model 2 with p < .05 means that neg binomial model is sig improvement over zero-inflated binomial model
+```
+
+```{r traits-predicting-indegree-q7, echo=FALSE, eval=TRUE, results='hide'}
+###question 7###
+
+##check for overdispersion## 
+#look at unconditional mean & variance of outcome
+mean(dNodes$inDegreeQ7)
+var(dNodes$inDegreeQ7)
+
+
+#run a quasi-poisson model (fits an extra dispersion parameter to account for extra variance) 
+summary(qpois <- glm(inDegreeQ7~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=quasipoisson, dNodes))
+#if dispersion parameter >1, then overdispersed
+
+##negative binomial regression model## 
+# run if data is overdispersed
+summary(ngb <- glm.nb(inDegreeQ7~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#use a likelihood ratio test (i.e.deviance) to compare poisson to negative binomial
+#poisson model#
+pois <- glm(inDegreeQ7~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=poisson, dNodes)
+
+#likelihood ratio test#
+lklhd <- 2*(logLik(ngb) - logLik(pois))
+pchisq(lklhd, df = 1, lower.tail = FALSE)
+# p < .05 means that negative binomial model is a sig improvement over a poisson model
+
+##zero-inflated negative binomial regression model##
+summary(zingb <- zeroinfl(inDegreeQ7~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#use a Vuong test to compare negative binomial to zero-inflated negative binomial
+vuong(ngb, zingb)
+# model 1 > model 2 with p < .05 means that neg binomial model is sig improvement over zero-inflated binomial model
+```
+
+```{r traits-predicting-indegree-q8, echo=FALSE, eval=TRUE, results='hide'}
+###question 8###
+
+##check for overdispersion## 
+#look at unconditional mean & variance of outcome
+mean(dNodes$inDegreeQ8)
+var(dNodes$inDegreeQ8)
+
+
+#run a quasi-poisson model (fits an extra dispersion parameter to account for extra variance) 
+summary(qpois <- glm(inDegreeQ8~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=quasipoisson, dNodes))
+#if dispersion parameter >1, then overdispersed
+
+##negative binomial regression model## 
+# run if data is overdispersed
+summary(ngb <- glm.nb(inDegreeQ8~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#use a likelihood ratio test (i.e.deviance) to compare poisson to negative binomial
+#poisson model#
+pois <- glm(inDegreeQ8~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), family=poisson, dNodes)
+
+#likelihood ratio test#
+lklhd <- 2*(logLik(ngb) - logLik(pois))
+pchisq(lklhd, df = 1, lower.tail = FALSE)
+# p < .05 means that negative binomial model is a sig improvement over a poisson model
+
+##zero-inflated negative binomial regression model##
+summary(zingb <- zeroinfl(inDegreeQ8~scale(Empathy_Factor) + scale(LifeSatTransf_Factor) + scale(PosAffect_Factor) + scale(NegAffect_Factor), dNodes))
+
+#use a Vuong test to compare negative binomial to zero-inflated negative binomial
+vuong(ngb, zingb)
+# model 1 > model 2 with p < .05 means that neg binomial model is sig improvement over zero-inflated binomial model
 ```

@@ -1,5 +1,5 @@
 ---
-title: "Trait correlates of individuals’ position in emerging social networks"
+title: "Empathy and Well-Being Correlate with Centrality in Different Social Networks"
 author: "Sylvia A. Morelli, Desmond C. Ong, Rucha Makati, Matthew O. Jackson, & Jamil Zaki"
 last updated: "January 2, 2017"
 ---
@@ -12,7 +12,7 @@ install.packages('GPArotation')
 library(psych)
 library(GPArotation)
 
-#set your working directory to wherever data is located
+#on next line, set your working directory to wherever data is located
 setwd('') 
 
 #load data
@@ -26,7 +26,7 @@ fa.parallel(subset)
 
 # Parallel analysis suggests that the number of factors = 5  and the number of components =  4 
 
-#Try 2-4 factors with oblique rotation
+#Try 3-5 factors with oblique rotation
 fa(subset, 3, rotate="oblimin", fm="minres") 
 fa(subset, 4, rotate="oblimin", fm="minres") 
 fa(subset, 5, rotate="oblimin", fm="minres") 
